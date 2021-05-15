@@ -45,19 +45,11 @@ float NeuralNetwork::lossFnDeriv(float z, float delta) { return z*delta; }
 
 void NeuralNetwork::ForwdProp()
 {
-    /*
-     * For this function, we want to start with the first layer of the network
-     * and move our way forward, computing the hypothesis function and then running
-     * that through the activation function to get the z value for the current layer.
-     * That z value will be fed forward through the use of weights to create the next z
-     * value, which will happen until the final layer. 
-     */
-    float hypothesis = 0;
-    // BIG TODO: Implement checking for being in the first or second layer becuase we have a bias neuron
-    
-    for (uint activationIterator = 1; activationIterator<activationValues.size(); activationIterator++) {
-        for (uint weightColIterator = 0; weightColIterator<weights[activationValues-1].cols(); weightColIterator++) {
-            this->activationValues[activationIterator] = this->activationValues[activationIterator - 1].dot(this->weights[activationIterator -1].col(weightColIterator));
-        }
+    for (uint activationIt = 1; activationIt<activationValues.size()-1; activationIt++) { // Iterate through each layer in the network
+	uint activationColIt = 0;
+	if (activationIt <= this->biasNeurons)  // Do we have a bias node?
+	    activationColIt++;
+	for ( ; activationColIt<activationValues[activationIt]->cols(); activationColIt++) // Iterate through each node in the layer.
+	    this->activationValues[activationIt][activationColIt] = activationFn(this.activationValues[activationIt-1].dot(this->weights[activationColIt]));
     }
 }
