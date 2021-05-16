@@ -1,55 +1,87 @@
-#include "NeuralNetwork.hpp"
+#include "global_neuralnetwork.hpp"
 
-/* std::vector<std::vector<double>> = [[0,0,1,1],   // x1
- *                                   [0,1,0,1],   // x2
- *                                   [0,1,1,0]];  // y
-*/
 
-NeuralNetwork::NeuralNetwork(std::vector<uint> topology, uint biasNeurons, float learningRate) {
-    // Constructor for all forward prop elements
+void NeuralNetwork::getResults(vector<double> &resultValues) const {
+	resultValues.clear();
 
-    if ((unsigned int)(topology.size()-1) < biasNeurons) 
-        throw std::invalid_argument("number of bias neurons is larger than topology!");
-
-    this->topology = topology;
-    this->learningRate = learningRate;
-    this->biasNeurons = biasNeurons;
-
-    for (uint i = 0; i<topology.size(); i++) {
-
-        if (i <= biasNeurons) {
-            activationValues.push_back(new RowVector(topology[i] + 1));     // Add a bias neuron that we can adust for the first two layers
-            weights.push_back(new Matrix(topology[i]+1, topology[i+1]+1));   // Little bit confusing, we are making a matrix 
-                                                                            // that is NxM where N is the number of units in 
-                                                                            // our current column in the network and M is the next number of units.
-                                                                            // since we are adding a bias neuron, we neeed to ass an extra unit
-            loss.push_back(new RowVector(topology[i] + 1));
-            deltas.push_back(new RowVector(topology[i] + 1));
-        } else {
-            activationValues.push_back(new RowVector(topology[i]));         // No bias unit this time.
-            weights.push_back(new Matrix(topology[i], topology[i+1]));
-            loss.push_back(new RowVector(topology[i]));
-            deltas.push_back(new RowVector(topology[i]));
-        }
-        activationValues[i]->setZero();
-        weights[i]->setRandom();
-        loss[i]->setZero();
-        deltas[i]->setZero();
-
-    }
+	for(uint n = 0; n<p_layers.back().size() - 1; n++)
+		resultValues.push_back(p_layers.back()[n].getOutputVal());
 }
 
-float NeuralNetwork::activationFn(float x) { return x; }
-float NeuralNetwork::activationFnDeriv(float x) { return (float) 1; }
-float NeuralNetwork::lossFnDeriv(float z, float delta) { return z*delta; }
+void NeuralNetwork::backProp(const vector<double> &targetVals) {
+	// Calculate entire network's error (Root mean square error here)
+	Layer &outputLayer = p_layers.back();
+	p_error = 0.0;
+	for (uint n = 0; n<outputLayer.size() - 1; n++) {
+		double delta = targetVals[n] - outputLayer[n].getOutputVal();
+		p_error += delta*delta;
+	}
+	p_error /= outputLayer.size() - 1;
+	p_error = sqrt(p_error); // final rms calculation
 
-void NeuralNetwork::ForwdProp()
-{
-    for (uint activationIt = 1; activationIt<activationValues.size()-1; activationIt++) { // Iterate through each layer in the network
-	uint activationColIt = 0;
-	if (activationIt <= this->biasNeurons)  // Do we have a bias node?
-	    activationColIt++;
-	for ( ; activationColIt<activationValues[activationIt]->cols(); activationColIt++) // Iterate through each node in the layer.
-	    this->activationValues[activationIt][activationColIt] = activationFn(this.activationValues[activationIt-1].dot(this->weights[activationColIt]));
-    }
+	// Recent average measurement. Thanks to someone who I can't remember for suggesting
+	// this. (NOT MY CODE)
+	p_recentAvgError = (p_recentAvgError * p_recentAverageSmoothingFactor + p_error) / (p_recentAverageSmoothingFactor + 1.0);
+
+	// Calculate output layer gradient
+	for (uint n = 0; n<outputLayer.size() - 1; n++) {
+		outputLayer[n].calcOutputGradients(targetVals[n]);
+	}
+	// Calculate hidden layer gradients
+	for (uint layerNum = p_layers.size() -2; layerNum > 0; layerNum--) {
+		Layer &hiddenLayer = p_layers[layerNum];
+		Layer &nextLayer = p_layers[layerNum + 1];
+
+		for (uint n = 0; n<hiddenLayer.size(); n++) {
+			hiddenLayer[n].calcHiddenGradients(nextLayer);
+		}
+	}
+	
+	// From output to hidden layers, update weights
+	for (uint layerNum = p_layers.size() - 1; layerNum > 0; layerNum--) {
+		Layer &layer = p_layers[layerNum];
+		Layer &prevLayer = p_layers[layerNum - 1];
+
+		for (uint n = 0; n < layer.size() - 1; n++) {
+			layer[n].updateInputWeights(prevLayer);
+		}
+	}
+}
+
+void NeuralNetwork::forwardProp(const vector<double> &inputVals) {
+	assert(inputVals.size() == p_layers[0].size() - 1);
+
+	// Latch input values into input neurons
+	for (uint i = 0; i<inputVals.size(); i++) {
+		p_layers[0][i].setOutputValue(inputVals[i]);
+	}
+
+	// Do the forward prop
+	for (uint layerNum = 1; layerNum<p_layers.size(); layerNum++) {
+		Layer &prevLayer = p_layers[layerNum -1];
+		for (uint n = 0; n<p_layers[layerNum].size() - 1; n++) {
+			p_layers[layerNum][n].forwardProp(prevLayer);
+		}
+	}
+}
+
+NeuralNetwork::NeuralNetwork(const vector<uint> &topology) {
+	uint numLayers = topology.size();
+	for (uint layerNum = 0; layerNum<numLayers; layerNum++) {
+		p_layers.push_back(Layer());
+		
+		uint numOutputs;
+		if(layerNum == topology.size() -1) // We're in output layer
+			numOutputs = 0;
+		else
+			numOutputs = topology[layerNum + 1];
+		
+		// Add neurons
+		for (uint neuronNum = 0; neuronNum <= topology[layerNum]; neuronNum++) { 	// Note that we're adding a bias
+												// neuron thus the <=
+			p_layers.back().push_back(Neuron(numOutputs, neuronNum));
+			cout << "made a neuron!!" << endl;
+		}
+		p_layers.back().back().setOutputValue(1.0);
+	}
 }
