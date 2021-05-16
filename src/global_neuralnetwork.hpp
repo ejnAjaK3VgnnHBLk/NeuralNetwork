@@ -24,7 +24,8 @@ class NeuralNetwork {
 		void forwardProp(const vector<double> &inputVals);
 		void backProp(const vector<double> &targetVals);
 		void getResults(vector<double> &resultValues) const; // Doesn't modify the net so it's a constant function
-
+        double getAvgError(void) const { return p_recentAvgError; }
+		
 	private:
 		vector<Layer> p_layers; 	// p_layers[layer#][node#]
                                     // Layer is vector<Neuron> so vector<vector<Neuron>>
