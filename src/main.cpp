@@ -1,4 +1,5 @@
 #include "global_neuralnetwork.hpp"
+#include <cstring>
 
 using namespace std;
 
@@ -9,98 +10,219 @@ void printWeights(string label, vector<double> &v) {
     cout<<endl;
 }
 
-int ReverseInt (int i)
-{
-    unsigned char ch1, ch2, ch3, ch4;
-    ch1=i&255;
-    ch2=(i>>8)&255;
-    ch3=(i>>16)&255;
-    ch4=(i>>24)&255;
-    return((int)ch1<<24)+((int)ch2<<16)+((int)ch3<<8)+ch4;
-}
-void ReadMNIST(int NumberOfImages, int DataOfAnImage,vector<vector<double>> &arr)
-{
-    arr.resize(NumberOfImages,vector<double>(DataOfAnImage));
-    ifstream file ("",ios::binary);
-    if (file.is_open())
-    {
-        int magic_number=0;
-        int number_of_images=0;
-        int n_rows=0;
-        int n_cols=0;
-        file.read((char*)&magic_number,sizeof(magic_number));
-        magic_number= ReverseInt(magic_number);
-        file.read((char*)&number_of_images,sizeof(number_of_images));
-        number_of_images= ReverseInt(number_of_images);
-        file.read((char*)&n_rows,sizeof(n_rows));
-        n_rows= ReverseInt(n_rows);
-        file.read((char*)&n_cols,sizeof(n_cols));
-        n_cols= ReverseInt(n_cols);
-        for(int i=0;i<number_of_images;++i)
-        {
-            for(int r=0;r<n_rows;++r)
-            {
-                for(int c=0;c<n_cols;++c)
-                {
-                    unsigned char temp=0;
-                    file.read((char*)&temp,sizeof(temp));
-                    arr[i][(n_rows*r)+c]= (double)temp;
-                }
-            }
-        }
-    } else 
-        throw runtime_error("Unable to open images database!");
-    file.close();
+class DataFileReader {
+    public:
+        DataFileReader(string inname, string outname);
+        void getInputs(uint numPictures, vector<double> &arr);
+        void getLabels(uint numLabels, vector<double> &arr);
+        void getCurrentTruthArray(int epoch, vector<double> &outputVector, vector<double> &currentTruth);
+        int reverseInt(int i);
+        int getnImages() { return nImages; }
+
+    private:
+        string inFileName;
+        string outFileName;
+        
+        ifstream inFile;
+        ifstream outFile;
+
+        const uint inMagic = 2051;
+        const uint groundMagic = 2049;
+
+        const uint blackThreshold = 128;
+
+        int nImages;
+};
+
+DataFileReader::DataFileReader(string inname, string outname) {
+    this->inFileName = inname;
+    this->outFileName = outname;
+    this->nImages = 0;
+    inFile.open(this->inFileName, ios::in|ios::binary|ios::ate );
+    outFile.open(this->outFileName, ios::in|ios::binary|ios::ate );
 }
 
-void ReadLabels(int NumberOfImages, int DataOfAnImage, vector<double> &arr) {
-    auto reverseInt = [](int i) {
-        unsigned char c1, c2, c3, c4;
-        c1 = i & 255, c2 = (i >> 8) & 255, c3 = (i >> 16) & 255, c4 = (i >> 24) & 255;
-        return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
-    };
+int DataFileReader::reverseInt(int i) {
+    unsigned char c1, c2, c3, c4;
+    c1 = i & 255;
+    c2 = (i >> 8) & 255;
+    c3 = (i >> 16) & 255;
+    c4 = (i >> 24) & 255;
+
+    return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
+}
+
+void DataFileReader::getInputs(uint numPictures, vector<double> &arr) {
+    int magicNumber = 0, numImages = 0, numRows = 0, numCols = 0;
+    int size = 0;
+
+    inFile.seekg(0, ios::end); // set pointer to end of file
+    size = inFile.tellg(); // length of file
+    cout << "Size of file: " << size << endl;
+    inFile.seekg(0, ios::beg); // set pointer to beginning of file
+
+    // Magic number
+    inFile.read((char*)&magicNumber, sizeof(this->inMagic));
+    magicNumber = reverseInt(magicNumber);
+    cout << "Magic number: " << magicNumber << endl;
+
+    // Number of images
+    inFile.read((char*)&numImages, sizeof(this->inMagic));
+    numImages = reverseInt(numImages);
+    this->nImages = numImages;
+    cout << "Number of iamges: " << numImages << endl;
+
+    // Row & cols
+    inFile.read((char*)&numRows, sizeof(this->inMagic));
+    inFile.read((char*)&numCols, sizeof(this->inMagic));
+    numRows = reverseInt(numRows);
+    numCols = reverseInt(numCols);
+    cout << "Number of rows: " << numRows << ", number of cols: " << numCols << endl;
+
+    // Read all the bytes
+    for (int i = 0; i<numRows*numCols*numImages; i++) {
+        int temp = 0;
+        inFile.read((char*)&temp, 1);
+        temp = (temp >= this->blackThreshold) ? temp = 1 : temp = 0; // Threshold
+        arr.push_back(temp);
+    }
+}
+
+void DataFileReader::getLabels(uint numLabels, vector<double> &arr) {
+    int magicNumber = 0; 
+    numLabels = 0;
+    int size = 0;
+
+    outFile.seekg(0, ios::end); // set pointer to end of file
+    size = outFile.tellg(); // length of file
+    cout << "Size of file: " << size << endl;
+    outFile.seekg(0, ios::beg); // set pointer to beginning of file
+
+    // Magic number
+    outFile.read((char*)&magicNumber, sizeof(this->inMagic));
+    magicNumber = reverseInt(magicNumber);
+    cout << "Magic Number: " << magicNumber << endl;
+
+    // Number of labels
+    outFile.read((char*)&numLabels, sizeof(this->inMagic));
+    numLabels = reverseInt(numLabels);
+    cout << "Num labels: " << numLabels << endl;
     
-    arr.resize(NumberOfImages);
-    ifstream file ("",ios::binary);
-    if (file.is_open()) {
-        int magic_number = 0;
-        
-        file.read((char *)&magic_number, sizeof(magic_number));
-        magic_number = reverseInt(magic_number);
+    for(int i = 0; i<numLabels; i++){
+        int temp = 0;
+        outFile.read((char*)&temp, 1);
+        arr.push_back(temp);
+    }
+}
 
-       // if(magic_number != 2049) throw runtime_error("Invalid MNIST label file!");
+void DataFileReader::getCurrentTruthArray(int epoch, vector<double> &outputVector, vector<double> &currentTruth) {
+    currentTruth.clear();
 
-        file.read((char *)&NumberOfImages, sizeof(NumberOfImages)), NumberOfImages = reverseInt(NumberOfImages);
-
-        for(int i = 0; i < NumberOfImages; i++) {
-            unsigned char temp = 0;
-            file.read((char*)&temp, 1);
-            arr[i] = (double)temp;
-        }
-        
-    } else 
-        throw runtime_error("Unable to open labels database!");
-        
-    file.close();
+    int truth = outputVector[epoch];
+    for(int i = 0; i<=9; i++) {
+        if (i == truth) 
+            currentTruth.push_back(1.0);
+        else
+            currentTruth.push_back(0.0);
+        // cout << "Truth: " << truth << ", truth array: " << currentTruth[i] << endl;
+    }
 }
 
 int main() {
-    TrainingData train("xor.txt");
-    train.genData("xor.txt");
+    //vector<uint> topology = {784, 196, 100, 25, 10};
+    vector<uint> topology = {784, 10};
+    vector<double> inputVector, outputVector, inputVals, targetVals, resultVals;
+
+    DataFileReader dfr("/home/n1le/Desktop/swag_nn/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/swag_nn/mnist/train-labels-idx1-ubyte");
+    NeuralNetwork net(topology);
+
+    dfr.getInputs(5000, inputVector);
+    dfr.getLabels(5000, outputVector);
+
+    int nImages = dfr.getnImages();
+
+    for (int i = 0; i<nImages*28*28; i+=28*28 ) {
+        // Iterate through all the images. Give bytes in groups of 28
+        cout << "Adding data: ";
+        for (int j = i; j<28*28; j++) {
+            inputVals.push_back(inputVector[j+i]);
+            cout << inputVector[j+i] ;
+        }
+        cout << endl << "Data pass: " << i%(28*28) << endl;
+
+        // Forward prop
+        net.forwardProp(inputVals);
+
+        dfr.getCurrentTruthArray(i, outputVector, resultVals);
+
+        // Establish ground truth
+        net.getResults(resultVals); 
+        printWeights("Outputs:", resultVals);
+
+        // Backprop on this
+        printWeights("Targets:", resultVals);
+        assert(resultVals.size() == topology.back());
+        net.backProp(resultVals);
+        
+        cout << "Net average error: " << net.getAvgError() << endl;
+    }
+    
+
+
+
+
+
+  /*
+    Awesome ascii art generator!!!!
+
+
+    cout << "Input: ";
+    for (int i = 0; i<28*28; i++) {
+        if (i%28 == 0)
+            cout << endl;
+        cout << inputVector[i];
+    }
+    cout << endl << "Output: " << outputVector[0] << endl;
+    */
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // TrainingData train("xor.txt");
+    // train.genData("xor.txt");
                              // 28x28, 14x14
+   /* DataFileReader dfr("/home/n1le/Desktop/swag_nn/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/swag_nn/mnist/train-labels-idx1-ubyte");
+    vector<double> arr;
+    dfr.getInputs(100, arr);
     vector<uint> topology = {784, 196, 100, 25, 10};
     
     NeuralNetwork net(topology);
     vector<vector<double>> trainingData;
     vector<double> inputVals, targetVals, resultVals;
     
-    uint numberOfImages = 5000;
-    uint DataOfAnImage = 784;
     int epoch = 0;
      
      
     // Get training data and ground truth 
-   ReadMNIST(numberOfImages, DataOfAnImage, trainingData); 
+    ReadMNIST(numberOfImages, DataOfAnImage, trainingData); 
     ReadLabels(numberOfImages, DataOfAnImage, targetVals);
     
     while ((long unsigned int) epoch < trainingData.size()) { // trainingData.size() is number of images.
@@ -136,7 +258,7 @@ int main() {
         
         cout << "Net average error: " << net.getAvgError() << endl;
     }
-    cout << endl << "done" << endl;
+    cout << endl << "done" << endl;*/
 
     return 0;
     
