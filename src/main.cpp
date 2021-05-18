@@ -58,26 +58,26 @@ void DataFileReader::getInputs(uint numPictures, vector<double> &arr) {
 
     inFile.seekg(0, ios::end); // set pointer to end of file
     size = inFile.tellg(); // length of file
-    cout << "Size of file: " << size << endl;
+  //  cout << "Size of file: " << size << endl;
     inFile.seekg(0, ios::beg); // set pointer to beginning of file
 
     // Magic number
     inFile.read((char*)&magicNumber, sizeof(this->inMagic));
     magicNumber = reverseInt(magicNumber);
-    cout << "Magic number: " << magicNumber << endl;
+  //  cout << "Magic number: " << magicNumber << endl;
 
     // Number of images
     inFile.read((char*)&numImages, sizeof(this->inMagic));
     numImages = reverseInt(numImages);
     this->nImages = numImages;
-    cout << "Number of iamges: " << numImages << endl;
+  //  cout << "Number of iamges: " << numImages << endl;
 
     // Row & cols
     inFile.read((char*)&numRows, sizeof(this->inMagic));
     inFile.read((char*)&numCols, sizeof(this->inMagic));
     numRows = reverseInt(numRows);
     numCols = reverseInt(numCols);
-    cout << "Number of rows: " << numRows << ", number of cols: " << numCols << endl;
+ //   cout << "Number of rows: " << numRows << ", number of cols: " << numCols << endl;
 
     // Read all the bytes
     for (int i = 0; i<numRows*numCols*numImages; i++) {
@@ -95,18 +95,18 @@ void DataFileReader::getLabels(uint numLabels, vector<double> &arr) {
 
     outFile.seekg(0, ios::end); // set pointer to end of file
     size = outFile.tellg(); // length of file
-    cout << "Size of file: " << size << endl;
+  //  cout << "Size of file: " << size << endl;
     outFile.seekg(0, ios::beg); // set pointer to beginning of file
 
     // Magic number
     outFile.read((char*)&magicNumber, sizeof(this->inMagic));
     magicNumber = reverseInt(magicNumber);
-    cout << "Magic Number: " << magicNumber << endl;
+ //   cout << "Magic Number: " << magicNumber << endl;
 
     // Number of labels
     outFile.read((char*)&numLabels, sizeof(this->inMagic));
     numLabels = reverseInt(numLabels);
-    cout << "Num labels: " << numLabels << endl;
+ //   cout << "Num labels: " << numLabels << endl;
     
     for(int i = 0; i<numLabels; i++){
         int temp = 0;
@@ -129,136 +129,38 @@ void DataFileReader::getCurrentTruthArray(int epoch, vector<double> &outputVecto
 }
 
 int main() {
-    //vector<uint> topology = {784, 196, 100, 25, 10};
-    vector<uint> topology = {784, 10};
-    vector<double> inputVector, outputVector, inputVals, targetVals, resultVals;
+    vector<uint> topology = {784, 196, 100, 25, 10};
+    //vector<uint> topology = {784, 10};
+    int numRows= 28, numCols = 28, numImages = 10;
 
     DataFileReader dfr("/home/n1le/Desktop/swag_nn/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/swag_nn/mnist/train-labels-idx1-ubyte");
     NeuralNetwork net(topology);
 
-    dfr.getInputs(5000, inputVector);
-    dfr.getLabels(5000, outputVector);
+    vector<double> inputVals, targetVals, resultVals;
+    dfr.getInputs(5000, inputVals);
+    dfr.getLabels(5000, targetVals);
 
     int nImages = dfr.getnImages();
-
-    for (int i = 0; i<nImages*28*28; i+=28*28 ) {
-        // Iterate through all the images. Give bytes in groups of 28
-        cout << "Adding data: ";
-        for (int j = i; j<28*28; j++) {
-            inputVals.push_back(inputVector[j+i]);
-            cout << inputVector[j+i] ;
-        }
-        cout << endl << "Data pass: " << i%(28*28) << endl;
-
-        // Forward prop
-        net.forwardProp(inputVals);
-
-        dfr.getCurrentTruthArray(i, outputVector, resultVals);
-
-        // Establish ground truth
-        net.getResults(resultVals); 
-        printWeights("Outputs:", resultVals);
-
-        // Backprop on this
-        printWeights("Targets:", resultVals);
-        assert(resultVals.size() == topology.back());
-        net.backProp(resultVals);
-        
-        cout << "Net average error: " << net.getAvgError() << endl;
-    }
-    
-
-
-
-
-
-  /*
-    Awesome ascii art generator!!!!
-
-
-    cout << "Input: ";
-    for (int i = 0; i<28*28; i++) {
-        if (i%28 == 0)
-            cout << endl;
-        cout << inputVector[i];
-    }
-    cout << endl << "Output: " << outputVector[0] << endl;
-    */
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // TrainingData train("xor.txt");
-    // train.genData("xor.txt");
-                             // 28x28, 14x14
-   /* DataFileReader dfr("/home/n1le/Desktop/swag_nn/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/swag_nn/mnist/train-labels-idx1-ubyte");
-    vector<double> arr;
-    dfr.getInputs(100, arr);
-    vector<uint> topology = {784, 196, 100, 25, 10};
-    
-    NeuralNetwork net(topology);
-    vector<vector<double>> trainingData;
-    vector<double> inputVals, targetVals, resultVals;
-    
     int epoch = 0;
-     
-     
-    // Get training data and ground truth 
-    ReadMNIST(numberOfImages, DataOfAnImage, trainingData); 
-    ReadLabels(numberOfImages, DataOfAnImage, targetVals);
-    
-    while ((long unsigned int) epoch < trainingData.size()) { // trainingData.size() is number of images.
-        epoch++;
-        cout << endl << "Epoch " << epoch << endl;
-        
-        inputVals = trainingData[epoch - 1];
-        
-        // Forward prop the information we just got
-        // printWeights(": Inputs:", inputVals);
-        net.forwardProp(inputVals);
-        
-        // Get our current ground truth into a 0-9 indexed array. Everything 
-        // should be 0 except for the ground truth.
-        vector<double> currentTruth;
-        double groundTruth = targetVals[epoch - 1];
-        cout << "Ground Truth (apparently is): " << groundTruth << endl;
-        for (uint i = 0; i <= 9; i++) {
-            if (i == groundTruth)
-                currentTruth.push_back(1.0);
-            else
-                currentTruth.push_back(0.0);
+
+    vector<double> temp, asdf;
+    for(int epoch = 0; epoch<10; epoch++) {
+        for(int i = 0; i<dfr.getnImages()*28*28; i+=28*28) { // Each image
+            temp.clear();
+            for (int j = 0; j<28*28; j++) {
+                temp.push_back(inputVals[i+j]);
+            }
+            net.forwardProp(temp);
+
+            net.getResults(resultVals);
+
+            dfr.getCurrentTruthArray(i%(28*28), targetVals, asdf);
+            assert(asdf.size() == topology.back());
+            net.backProp(asdf);
         }
-        
-        // Get the outputs
-        net.getResults(currentTruth);
-        printWeights("Outputs:", currentTruth);
-        
-        // Backprop on this
-        printWeights("Targets:", currentTruth);
-        assert(currentTruth.size() == topology.back());
-        net.backProp(currentTruth);
-        
-        cout << "Net average error: " << net.getAvgError() << endl;
+        cout << "net avg error: " << net.getAvgError() << endl;
     }
-    cout << endl << "done" << endl;*/
+    cout << endl << "done" << endl;
 
     return 0;
     
