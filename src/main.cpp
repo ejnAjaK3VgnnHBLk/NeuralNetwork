@@ -154,7 +154,7 @@ int main() {
 
             net.getResults(resultVals);
 
-            dfr.getCurrentTruthArray(i%(28*28), targetVals, asdf);
+            dfr.getCurrentTruthArray(i%28*28, targetVals, asdf);
             assert(asdf.size() == topology.back());
             net.backProp(asdf);
         }
