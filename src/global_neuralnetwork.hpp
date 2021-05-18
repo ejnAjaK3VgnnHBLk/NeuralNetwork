@@ -7,6 +7,10 @@
 #include <cassert>
 #include <cmath>
 
+#include <fstream>
+#include <sstream>
+#include <ctime>
+
 typedef unsigned int uint;
 using namespace std;
 
@@ -55,6 +59,20 @@ class Neuron {
 		double p_gradient;
 		static double learningRate;
 		static double alpha;
+};
+
+class TrainingData {
+    public:
+        TrainingData(const string filename);
+        bool isEof(void) { return p_file.eof(); }
+        
+        // Number of inputs read from the file
+        uint getInputs(vector<double> &inputVals);
+        uint getGroundTruth(vector<double> &targetOutputVals);
+        
+        void genData(const string filename);
+    private:
+        ifstream p_file;
 };
 
 #endif
