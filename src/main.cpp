@@ -21,7 +21,7 @@ int ReverseInt (int i)
 void ReadMNIST(int NumberOfImages, int DataOfAnImage,vector<vector<double>> &arr)
 {
     arr.resize(NumberOfImages,vector<double>(DataOfAnImage));
-    ifstream file ("/home/n1le/Desktop/swag_nn/mnist/train-images-idx3-ubyte",ios::binary);
+    ifstream file ("",ios::binary);
     if (file.is_open())
     {
         int magic_number=0;
@@ -61,7 +61,7 @@ void ReadLabels(int NumberOfImages, int DataOfAnImage, vector<double> &arr) {
     };
     
     arr.resize(NumberOfImages);
-    ifstream file ("/home/n1le/Desktop/swag_nn/mnist/train-labels-idx3-ubyte",ios::binary);
+    ifstream file ("",ios::binary);
     if (file.is_open()) {
         int magic_number = 0;
         
