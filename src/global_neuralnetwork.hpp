@@ -11,6 +11,8 @@
 #include <sstream>
 #include <ctime>
 
+#include <cstring>
+
 typedef unsigned int uint;
 using namespace std;
 
@@ -73,6 +75,30 @@ class TrainingData {
         void genData(const string filename);
     private:
         ifstream p_file;
+};
+
+class DataFileReader {
+    public:
+        DataFileReader(string inname, string outname);
+        void getInputs(uint numPictures, vector<double> &arr);
+        void getLabels(uint numLabels, vector<double> &arr);
+        void getCurrentTruthArray(int epoch, vector<double> &outputVector, vector<double> &currentTruth);
+        int reverseInt(int i);
+        int getnImages() { return nImages; }
+
+    private:
+        string inFileName;
+        string outFileName;
+        
+        ifstream inFile;
+        ifstream outFile;
+
+        const uint inMagic = 2051;
+        const uint groundMagic = 2049;
+
+        const uint blackThreshold = 128;
+
+        int nImages;
 };
 
 #endif
