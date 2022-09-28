@@ -43,19 +43,39 @@ double Neuron::activationFnDeriv(double x) { return 1 - x*x; } 	// Note that thi
 
 void Neuron::forwardProp(const Layer &prevLayer) {
 	double sum;
+	double uwSum;
 	
-	// Loop through all previous layer output and get weighted sum
-	for (uint n = 0; n<prevLayer.size(); n++) {
-		sum += prevLayer[n].getOutputVal() * prevLayer[n].p_outputWeights[p_neuronIndex].weight;
-	}
+	if (!neuron_softmax) {
+		// Loop through all previous layer output and get weighted sum
+		for (uint n = 0; n<prevLayer.size(); n++) {
+			sum += prevLayer[n].getOutputVal() * prevLayer[n].p_outputWeights[p_neuronIndex].weight;
+		}
 
-	p_outputVal = Neuron::activationFn(sum);
+		p_outputVal = Neuron::activationFn(sum);
+	} else {
+		for (uint n = 0; n<prevLayer.size(); n++) {
+			sum += prevLayer[n].getOutputVal() * prevLayer[n].p_outputWeights[p_neuronIndex].weight;
+			uwSum = exp(prevLayer[n].getOutputVal());
+		}
+		double output_val = Neuron::activationFn(sum);
+		p_outputVal = exp(output_val)/uwSum;
+	}
 }
 
-Neuron::Neuron(uint numOutputs, uint neuronIndex) {
+/*Neuron::Neuron(uint numOutputs, uint neuronIndex) {
 	for (uint c = 0; c<numOutputs; c++) {
 		p_outputWeights.push_back(Connection());
 		p_outputWeights.back().weight = randomWeight();
 	}
 	p_neuronIndex = neuronIndex;
+	neuron_softmax = false;
+}*/
+
+Neuron::Neuron(uint numOutputs, uint neuronIndex, bool softmax) {
+	for (uint c = 0; c<numOutputs; c++) {
+		p_outputWeights.push_back(Connection());
+		p_outputWeights.back().weight = randomWeight();
+	}
+	p_neuronIndex = neuronIndex;
+	neuron_softmax = softmax;
 }

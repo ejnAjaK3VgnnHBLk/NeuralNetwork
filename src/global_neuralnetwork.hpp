@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
+#include <tgmath.h>
 
 #include <fstream>
 #include <sstream>
@@ -26,7 +27,7 @@ typedef vector<Neuron> Layer;
 
 class NeuralNetwork {
 	public:
-		NeuralNetwork(const vector<uint> &topology);
+		NeuralNetwork(const vector<uint> &topology, bool softmax);
 		void forwardProp(const vector<double> &inputVals);
 		void backProp(const vector<double> &targetVals);
 		void getResults(vector<double> &resultValues) const; // Doesn't modify the net so it's a constant function
@@ -44,6 +45,7 @@ class NeuralNetwork {
 class Neuron {
 	public:
 		Neuron(uint numOutputs, uint neuronIndex);
+		Neuron(uint numOutputs, uint neuronIndex, bool softmax);
 		void setOutputValue(double val) { p_outputVal = val; }
 		double getOutputVal(void) const { return p_outputVal; }
 		void forwardProp(const Layer &prevLayer);
@@ -61,6 +63,7 @@ class Neuron {
 		double p_gradient;
 		static double learningRate;
 		static double alpha;
+		bool neuron_softmax;
 };
 
 class TrainingData {

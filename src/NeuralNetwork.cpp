@@ -50,7 +50,11 @@ void NeuralNetwork::backProp(const vector<double> &targetVals) {
 
 void NeuralNetwork::forwardProp(const vector<double> &inputVals) {
 	//assert(inputVals.size() == p_layers[0].size() - 1);
-    if(inputVals.size() > p_layers[0].size() - 1) { cout<<"Too many inputs"<<endl; exit(1); } else if (inputVals.size() < p_layers[0].size() - 1) { cout<<"Too few inputs!"<<endl; exit(1); }
+    if(inputVals.size() > p_layers[0].size() - 1) { 
+		cout<<"Too many inputs"<<endl; exit(1); 
+	} else if (inputVals.size() < p_layers[0].size() - 1) { 
+		cout<<"Too few inputs!"<<endl; exit(1); 
+	}
     
 	// Latch input values into input neurons
 	for (uint i = 0; i<inputVals.size(); i++) {
@@ -66,9 +70,10 @@ void NeuralNetwork::forwardProp(const vector<double> &inputVals) {
 	}
 }
 
-NeuralNetwork::NeuralNetwork(const vector<uint> &topology) {
-	uint numLayers = topology.size();
-	for (uint layerNum = 0; layerNum<numLayers; layerNum++) {
+NeuralNetwork::NeuralNetwork(const vector<uint> &topology, bool softmax) {
+	uint totalNumLayers = topology.size();
+	for (uint layerNum = 0; layerNum<totalNumLayers; layerNum++) {
+		
 		p_layers.push_back(Layer());
 		
 		uint numOutputs;
@@ -78,11 +83,17 @@ NeuralNetwork::NeuralNetwork(const vector<uint> &topology) {
 			numOutputs = topology[layerNum + 1];
 		
 		// Add neurons
-		for (uint neuronNum = 0; neuronNum <= topology[layerNum]; neuronNum++) { 	// Note that we're adding a bias
+		for (uint neuronNum = 0; neuronNum < topology[layerNum]; neuronNum++) { 	// Note that we're adding a bias
+			if (numOutputs == 0 && softmax == true) // we need a softmax neuron layer
+				p_layers.back().push_back(Neuron(numOutputs, neuronNum, softmax));
 												// neuron thus the <=
-			p_layers.back().push_back(Neuron(numOutputs, neuronNum));
-			// cout << "made a neuron!!" << endl;
+			else
+				p_layers.back().push_back(Neuron(numOutputs, neuronNum, false));
+			 // cout << "made a neuron!!" << endl;
 		}
+		
 		p_layers.back().back().setOutputValue(1.0);
 	}
 }
+
+

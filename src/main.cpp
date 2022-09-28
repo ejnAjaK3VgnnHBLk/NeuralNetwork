@@ -15,8 +15,8 @@ int main() {
     //vector<uint> topology = {784, 10};
     int numRows= 28, numCols = 28, numImages = 10;
 
-    DataFileReader dfr("/home/n1le/Desktop/swag_nn/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/swag_nn/mnist/train-labels-idx1-ubyte");
-    NeuralNetwork net(topology);
+    DataFileReader dfr("/home/n1le/Desktop/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/mnist/train-labels-idx1-ubyte");
+    NeuralNetwork net(topology, true);
 
     vector<double> inputVals, targetVals, resultVals;
     dfr.getInputs(5000, inputVals);
