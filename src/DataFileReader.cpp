@@ -5,7 +5,11 @@ DataFileReader::DataFileReader(string inname, string outname) {
     this->outFileName = outname;
     this->nImages = 0;
     inFile.open(this->inFileName, ios::in|ios::binary|ios::ate );
+    if(inFile.fail())
+        cout << "Error opening infile!" << endl;
     outFile.open(this->outFileName, ios::in|ios::binary|ios::ate );
+    if(outFile.fail())
+        cout << "Error opening outfile" << endl;
 }
 
 int DataFileReader::reverseInt(int i) {
@@ -24,19 +28,20 @@ void DataFileReader::getInputs(uint numPictures, vector<double> &arr) {
 
     inFile.seekg(0, ios::end); // set pointer to end of file
     size = inFile.tellg(); // length of file
-  //  cout << "Size of file: " << size << endl;
+    cout << "Size of file: " << size << endl;
     inFile.seekg(0, ios::beg); // set pointer to beginning of file
 
     // Magic number
     inFile.read((char*)&magicNumber, sizeof(this->inMagic));
     magicNumber = reverseInt(magicNumber);
-  //  cout << "Magic number: " << magicNumber << endl;
+    cout << "Magic number: " << magicNumber << endl;
 
     // Number of images
     inFile.read((char*)&numImages, sizeof(this->inMagic));
     numImages = reverseInt(numImages);
     this->nImages = numImages;
-    
+    cout << "Number of images: " << numImages << endl;
+
     if(numPictures > numImages) { throw runtime_error("Number of requested images exceeds number of iamges in dataset!"); }
 
     // Row & cols
@@ -44,6 +49,7 @@ void DataFileReader::getInputs(uint numPictures, vector<double> &arr) {
     inFile.read((char*)&numCols, sizeof(this->inMagic));
     numRows = reverseInt(numRows);
     numCols = reverseInt(numCols);
+    cout << "Rows: " << numRows << " cols: " << numCols << endl;
 
     for (int i = 0; i<numRows*numCols*numPictures; i++) {
         int temp = 0;

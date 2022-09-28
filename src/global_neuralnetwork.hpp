@@ -44,7 +44,7 @@ class NeuralNetwork {
 
 class Neuron {
 	public:
-		Neuron(uint numOutputs, uint neuronIndex);
+	//	Neuron(uint numOutputs, uint neuronIndex);
 		Neuron(uint numOutputs, uint neuronIndex, bool softmax);
 		void setOutputValue(double val) { p_outputVal = val; }
 		double getOutputVal(void) const { return p_outputVal; }

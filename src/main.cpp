@@ -11,16 +11,16 @@ void printWeights(string label, vector<double> &v) {
 
 
 int main() {
-    vector<uint> topology = {784, 196, 100, 25, 10};
+    vector<uint> topology = {785, 196, 100, 25, 10};
     //vector<uint> topology = {784, 10};
     int numRows= 28, numCols = 28, numImages = 10;
 
-    DataFileReader dfr("/home/n1le/Desktop/mnist/train-images-idx3-ubyte", "/home/n1le/Desktop/mnist/train-labels-idx1-ubyte");
+    DataFileReader dfr("/users/n1le/Documents/NeuralNetwork/images", "/users/n1le/Documents/NeuralNetwork/labels");
     NeuralNetwork net(topology, true);
 
     vector<double> inputVals, targetVals, resultVals;
-    dfr.getInputs(5000, inputVals);
-    dfr.getLabels(5000, targetVals);
+    dfr.getInputs(5, inputVals);
+    dfr.getLabels(5, targetVals);
 
     int nImages = dfr.getnImages();
     int epoch = 0;
@@ -44,7 +44,7 @@ int main() {
         }
         cout << "net avg error: " << net.getAvgError() << endl;
     }
-    cout << endl << "done" << endl;
+    cout << endl << "done" << endl; 
 
     return 0;
     
