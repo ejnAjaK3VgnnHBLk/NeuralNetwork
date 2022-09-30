@@ -26,13 +26,13 @@ int main() {
     int epoch = 0;
 
     vector<double> temp, asdf;
-    for(int epoch = 0; epoch<10; epoch++) {
+    for(int epoch = 0; epoch<2; epoch++) {
         for(int i = 0; i<dfr.getnImages()*28*28; i+=28*28) { // Each image
             temp.clear();
             for (int j = 0; j<28*28; j++) {
                 temp.push_back(inputVals[i+j]);
             }
-            net.forwardProp(temp);
+            // net.forwardProp(temp); cout << "FP" << endl;
 
             net.getResults(resultVals);
 
@@ -40,7 +40,7 @@ int main() {
             assert(asdf.size() == topology.back());
             net.backProp(asdf);
 
-           // cout << "net avg error: " << net.getAvgError() << endl;
+            cout << "net avg error: " << net.getAvgError() << endl;
         }
         cout << "net avg error: " << net.getAvgError() << endl;
     }

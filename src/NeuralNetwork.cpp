@@ -21,7 +21,7 @@ void NeuralNetwork::backProp(const vector<double> &targetVals) {
 
 	// Recent average measurement. Thanks to someone who I can't remember for suggesting
 	// this. (NOT MY CODE)
-	p_recentAvgError = (p_recentAvgError * p_recentAverageSmoothingFactor + p_error) / (p_recentAverageSmoothingFactor + 1.0);
+	p_recentAvgError = (p_recentAvgError * p_recentAverageSmoothingFactor + p_error) / (p_recentAverageSmoothingFactor + 1.0); 
 
 	// Calculate output layer gradient
 	for (uint n = 0; n<outputLayer.size() - 1; n++) {

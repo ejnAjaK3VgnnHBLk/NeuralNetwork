@@ -55,6 +55,7 @@ class Neuron {
 	private:
 		static double activationFn(double x);
 		static double activationFnDeriv(double x);
+		static double softmaxDeriv(double x, double targetVal);
 		static double randomWeight(void) { return rand() / double(RAND_MAX); }
 		double sumDerivOfWeight(const Layer &nextLayer) const;
 		double p_outputVal;

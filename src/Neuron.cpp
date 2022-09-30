@@ -34,12 +34,18 @@ void Neuron::calcHiddenGradients(const Layer &nextLayer) {
 
 void Neuron::calcOutputGradients(double targetVal) {
 	double delta = targetVal - p_outputVal;
-	p_gradient = delta * Neuron::activationFnDeriv(p_outputVal);
+	 p_gradient = delta * Neuron::activationFnDeriv(p_outputVal);
+	//p_gradient = delta * Neuron::softmaxDeriv(p_outputVal, targetVal);
 }
 
 double Neuron::activationFn(double x) { return tanh(x); }
 double Neuron::activationFnDeriv(double x) { return 1 - x*x; } 	// Note that this isn't the actual derivative of
 								// tanh, but it's close enough in our range
+
+double Neuron::softmaxDeriv(double x, double targetVal) { //return x - targetVal; 
+return 1-x*x;
+}
+
 
 void Neuron::forwardProp(const Layer &prevLayer) {
 	double sum;
@@ -61,15 +67,6 @@ void Neuron::forwardProp(const Layer &prevLayer) {
 		p_outputVal = exp(output_val)/uwSum;
 	}
 }
-
-/*Neuron::Neuron(uint numOutputs, uint neuronIndex) {
-	for (uint c = 0; c<numOutputs; c++) {
-		p_outputWeights.push_back(Connection());
-		p_outputWeights.back().weight = randomWeight();
-	}
-	p_neuronIndex = neuronIndex;
-	neuron_softmax = false;
-}*/
 
 Neuron::Neuron(uint numOutputs, uint neuronIndex, bool softmax) {
 	for (uint c = 0; c<numOutputs; c++) {
